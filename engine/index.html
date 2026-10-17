@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>夜雨城</title>
+  <link rel="icon" href="data:," />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;500;700&family=Noto+Serif+SC:wght@600&family=ZCOOL+QingKe+HuangYou&family=ZCOOL+KuaiLe&family=ZCOOL+XiaoWei&family=Ma+Shan+Zheng&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --ink: #eef9fa;
+      --dim: rgba(220, 244, 248, 0.72);
+      --night: #0b2130;
+      --cyan: #1fc3d8;
+    }
+    html, body { margin: 0; height: 100%; background: var(--night); overflow: hidden; color: var(--ink); }
+    canvas { display: block; touch-action: none; cursor: grab; }
+    canvas:active { cursor: grabbing; }
+
+    #intro {
+      position: fixed; inset: 0; display: grid; place-items: center; text-align: center;
+      background: radial-gradient(ellipse at 50% 55%, rgba(18, 58, 76, 0.55), rgba(5, 16, 24, 0.97) 72%);
+      transition: opacity 2.4s ease, visibility 2.4s;
+      font-family: 'Noto Sans SC', sans-serif; user-select: none;
+    }
+    #intro.gone { opacity: 0; visibility: hidden; }
+    #intro h1 {
+      font-weight: 300; font-size: clamp(34px, 7vw, 64px); letter-spacing: 0.6em; margin: 0 0 0 0.6em;
+      text-shadow: 0 0 18px rgba(31, 195, 216, 0.7), 0 0 2px #fff;
+    }
+    #intro .en { font-family: 'Rajdhani', sans-serif; letter-spacing: 0.55em; color: var(--dim); margin-top: 16px; font-size: 14px; }
+    #intro .go { margin-top: 52px; font-size: 13px; letter-spacing: 0.45em; color: var(--dim); opacity: 0; transition: opacity 1.2s; }
+    #intro.ready { cursor: pointer; }
+    #intro.ready .go { opacity: 1; animation: breathe 3.2s ease-in-out infinite; }
+    #status { margin-top: 52px; font-size: 13px; letter-spacing: 0.3em; color: var(--dim); min-height: 1em; }
+    #intro.ready #status { display: none; }
+    @keyframes breathe { 50% { opacity: 0.35; } }
+
+    #hint, #mode {
+      position: fixed; left: 24px; font-family: 'Noto Sans SC', sans-serif; font-size: 12px; letter-spacing: 0.2em;
+      color: var(--dim); pointer-events: none; text-shadow: 0 0 6px rgba(0, 20, 30, 0.9);
+    }
+    #hint { bottom: 48px; opacity: 0; transition: opacity 2s; line-height: 2; }
+    #hint.show { opacity: 1; }
+    #mode { bottom: 22px; opacity: 0.55; }
+    #chips { position: fixed; right: 24px; bottom: 18px; display: flex; gap: 8px; }
+    #chips button {
+      font: 13px 'Noto Sans SC', sans-serif; letter-spacing: 0.15em;
+      color: var(--dim); background: rgba(5, 20, 30, 0.35); border: 1px solid rgba(31, 195, 216, 0.45); border-radius: 999px;
+      padding: 5px 12px; cursor: pointer; opacity: 0.75; transition: opacity 0.4s, border-color 0.4s;
+    }
+    #chips button:hover, #chips button:focus-visible { opacity: 1; border-color: rgba(238, 249, 250, 0.8); }
+    /* the sliders over the chips: how fast one walks, how loud the music */
+    #sliders {
+      position: fixed; right: 24px; bottom: 56px; display: flex; flex-direction: column; gap: 8px; align-items: flex-end;
+      font: 12px 'Noto Sans SC', sans-serif; letter-spacing: 0.2em; color: var(--dim); text-shadow: 0 0 6px rgba(0, 20, 30, 0.9);
+      opacity: 0.75; transition: opacity 0.4s;
+    }
+    #sliders:hover, #sliders:focus-within { opacity: 1; }
+    #sliders label { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+    #sliders [hidden] { display: none; }
+    #sliders input {
+      -webkit-appearance: none; appearance: none; width: 118px; height: 2px; margin: 6px 0; border-radius: 2px;
+      background: rgba(31, 195, 216, 0.45); cursor: pointer; outline: none;
+    }
+    #sliders input::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: var(--night);
+      border: 1px solid var(--ink); box-shadow: 0 0 6px rgba(31, 195, 216, 0.8);
+    }
+    #sliders input::-moz-range-thumb {
+      width: 12px; height: 12px; border-radius: 50%; background: var(--night); border: 1px solid var(--ink); box-shadow: 0 0 6px rgba(31, 195, 216, 0.8);
+    }
+    @media (max-width: 600px) {
+      #hint { left: 16px; bottom: 60px; }
+      #mode { left: 16px; }
+      #chips { right: 16px; bottom: 54px; }
+      #sliders { right: 16px; bottom: 96px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="intro">
+    <div>
+      <h1>夜雨城</h1>
+      <div class="en">NIGHT · RAIN</div>
+      <div id="status">正在加载…</div>
+      <div class="go">点击进入</div>
+    </div>
+  </div>
+  <div id="hint">拖动环顾 · WASD 行走 · 双击 W 奔跑<br />空格 漫步 / 自由 · R 雨量 · M 声音</div>
+  <div id="mode"></div>
+  <div id="sliders">
+    <label title="步速：从步行到跑步的 1.5 倍">步速<input id="pace" type="range" min="0" max="1" step="0.01" value="0.5" /></label>
+    <label id="music-row" title="音乐音量">音乐<input id="music" type="range" min="0" max="1" step="0.01" value="0.5" /></label>
+  </div>
+  <div id="chips">
+    <button id="rain" type="button" title="雨量（R）">中雨</button>
+    <button id="sound" type="button" title="声音（M）">♪</button>
+  </div>
+  <script>
+    // If loading fails (often a stale cached script after an update), say so instead of hanging.
+    const showLoadError = (msg) => {
+      const s = document.getElementById('status');
+      if (s && !document.getElementById('intro').classList.contains('ready')) {
+        s.textContent = '加载出错，请强制刷新（Cmd+Shift+R）· ' + msg;
+      }
+    };
+    addEventListener('error', (e) => showLoadError(e.message || '脚本错误'));
+    addEventListener('unhandledrejection', (e) => showLoadError(String(e.reason?.message || e.reason)));
+  </script>
+  <script type="module">
+    // Served by serve.py, the scripts load from a fresh /v<time>/ path on every visit, so the browser can never
+    // fall back on an old copy after an update; any other server just gets the usual path.
+    const fresh = `./v${Date.now()}/`;
+    const ok = await fetch(`${fresh}src/main.js`, { method: 'HEAD', cache: 'no-store' }).then((r) => r.ok).catch(() => false);
+    await import(`${ok ? fresh : './'}src/main.js`);
+  </script>
+</body>
+</html>
