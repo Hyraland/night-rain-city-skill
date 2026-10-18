@@ -737,7 +737,7 @@ export function canvasPlane(geom, aspect, transparent, draw, H = 256) {
 //   'face'   one great kitten's face, sparkles round it; its name beside it (wide) or under it (upright); words:
 //            false for none (a blade sign)
 //   'tiles'  small faces in tiles, three rows (an upright one three columns; rows: 1 for a shop's fascia), the
-//            name's first four characters in the four middle tiles; on a wide one the faces turn round in a wave;
+//            name's first four characters (or a shorter name's all) in the middle tiles; on a wide one the faces turn round in a wave;
 //            animals: many animals' faces rather than only the kitten
 //   'flip'   a machine's: tiles of animals' faces, no words, turned over one after another like cards
 // geom: its plane (placed), w x h; seed its numbers; B the brand ({ name, en, color, index })
@@ -776,14 +776,14 @@ export function meowLED(geom, w, h, seed, B, { layout = 'face', words = true, an
     const gx = nc > 1 ? (NX - 2 * mg - nc * sz) / (nc - 1) : 0, gy = nr > 1 ? (NY - 2 * mg - nr * sz) / (nr - 1) : 0;
     tiles = { mg, sz, gx, gy, nr, nc };
     spin = layout === 'tiles' && across && nr >= 3;
-    const mid = across ? [Math.floor(nr / 2), Math.floor((nc - 4) / 2)] : [Math.floor((nr - 4) / 2), 1];
+    const name = [...B.name].slice(0, 4), nw = name.length;          // (its first four characters, or all of a shorter name)
+    const mid = across ? [Math.floor(nr / 2), Math.floor((nc - nw) / 2)] : [Math.floor((nr - nw) / 2), 1];
     const kinds = Array.from({ length: nr * nc }, (_, i) => (animals || flip ? MEOW_ANIMALS[i % MEOW_ANIMALS.length] : 'cat'));
     for (let i = kinds.length - 1; i > 0; i--) { const j = Rn.int(0, i); [kinds[i], kinds[j]] = [kinds[j], kinds[i]]; }
-    const name = [...B.name];
     for (let r = 0; r < nr; r++) for (let c = 0; c < nc; c++) {
       const cx = mg + sz / 2 + c * (sz + gx), cy = mg + sz / 2 + r * (sz + gy);
       const k = flip ? -1 : across ? (r === mid[0] ? c - mid[1] : -1) : (c === mid[1] ? r - mid[0] : -1);
-      if (k >= 0 && k < 4 && nc * nr >= 6) chars.push([name[k], cx, cy, sz * 0.9]);
+      if (k >= 0 && k < nw && nc * nr >= 6) chars.push([name[k], cx, cy, sz * 0.9]);
       else {
         // (each face a whole number of cells across, its corner on a cell's: so every one falls on the dots alike)
         const n = Math.round(sz * 0.96), at = (v) => Math.round(v - n / 2) + n / 2;
